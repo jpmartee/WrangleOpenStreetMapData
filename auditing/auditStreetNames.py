@@ -57,4 +57,5 @@ def audit_street_names(osmfile):
     return street_types
 
 st_types = audit_street_names(OSMFILE)
+print 'Unexpected endings:', len(st_types)
 pprint.pprint(dict(st_types))
