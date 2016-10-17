@@ -1,6 +1,7 @@
 import xml.etree.cElementTree as ET
 import codecs
 import json
+import re
 from updateName import update_name
 from updatePostcode import update_postcode
 from updatePhone import update_phone
@@ -18,10 +19,10 @@ mapping = { 'St': 'Street',
 			'Merrill': 'Merrill Street',
 			'Pacific': 'Pacific Avenue',
 			'Seabright': 'Seabright Avenue'
-		  }
+		}
 
 lower_colon = re.compile(r'^([a-z]|_)*:([a-z]|_)*$')
-problemchars = re.compile(r'[=\+/&<>;\''\?%#$@\,\. \t\r\n]')
+problemchars = re.compile(r"[=\+/&<>;\''\?%#$@\,\. \t\r\n]")
 
 # attributes in the CREATED array should be added under a key 'created'
 CREATED = ['version', 'changeset', 'timestamp', 'user', 'uid']
