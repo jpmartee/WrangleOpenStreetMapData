@@ -9,13 +9,13 @@ def audit_keys(osmfile):
 	Args:
 		osmfile(xml): OpenStreetMaps data in xml format
 	Returns:
-		keys(set): A dictionary of keys/counts in the file
+		keys(dict): A dictionary of keys/counts in the file
 	"""
-	osm_file = open(osmfile, "r")
+	osm_file = open(osmfile, 'r')
 	keys = dict()
 	for event, elem in ET.iterparse(osm_file, events=("start",)):
-		if elem.tag == "node" or elem.tag == "way":
-			for tag in elem.iter("tag"):
+		if elem.tag == 'node' or elem.tag == 'way':
+			for tag in elem.iter('tag'):
 				key = tag.attrib['k']
 				if key in keys:
 					keys[key] += 1
@@ -23,4 +23,6 @@ def audit_keys(osmfile):
 					keys[key] = 1
 	return keys
 
-pprint.pprint(audit_keys('santa-cruz_california.osm')) 
+keys_dict = audit_keys('../santa-cruz_california.osm')
+print 'Unique keys', len(keys_dict)
+pprint.pprint(keys_dict) 
