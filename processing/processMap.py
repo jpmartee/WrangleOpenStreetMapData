@@ -1,75 +1,44 @@
 import xml.etree.cElementTree as ET
 import codecs
 import json
+from updateName import update_name
+from updatePostcode import update_postcode
+from updatePhone import update_phone
 
 # Maps endings to proper edits
-mapping = { "St": "Street",
-			"St.": "Street",
-			"Rd": "Road",
-			"Ave": "Avenue",
-			"Dr": "Drive",
-			"Cedar": "Cedar Street",
-			"Chestnut": "Chestnut Street",
-			"front": "Front Street",
-			"Front": "Front Street",
-			"Merrill": "Merrill Street",
-			"Pacific": "Pacific Avenue",
-			"Seabright": "Seabright Avenue"
+mapping = { 'St': 'Street',
+			'St.': 'Street',
+			'Rd': 'Road',
+			'Ave': 'Avenue',
+			'Dr': 'Drive',
+			'Cedar': 'Cedar Street',
+			'Chestnut': 'Chestnut Street',
+			'front': 'Front Street',
+			'Front': 'Front Street',
+			'Merrill': 'Merrill Street',
+			'Pacific': 'Pacific Avenue',
+			'Seabright': 'Seabright Avenue'
 		  }
 
-street_type_re = re.compile(r'\b\S+\.?$', re.IGNORECASE)
-
-def update_name(name, mapping):
-	"""
-	Function updates street name according to mapping
-
-	Args:
-		name(string): street name
-		mapping(dict): dictionary mapping unexpected types to 
-					   proper types
-	Returns:
-		name(string): updated street name
-	"""
-	m = street_type_re.search(name)
-	m = m.group()
-	if m in mapping.keys():
-		name = name.replace(m, mapping[m])
-
-	return name
-
-def update_postcode(postcode):
-	"""Function updates postcode to 5 digit version"""
-	if postcode.startswith('CA'):
-		postcode = postcode[3:]
-	
-	elif len(postcode) > 5:
-		postcode = postcode[0:5]
-		
-	else:
-		postcode = postcode
-	
-	return postcode
-
-
 lower_colon = re.compile(r'^([a-z]|_)*:([a-z]|_)*$')
-problemchars = re.compile(r'[=\+/&<>;\'"\?%#$@\,\. \t\r\n]')
+problemchars = re.compile(r'[=\+/&<>;\''\?%#$@\,\. \t\r\n]')
 
-# attributes in the CREATED array should be added under a key "created"
-CREATED = ["version", "changeset", "timestamp", "user", "uid"]
+# attributes in the CREATED array should be added under a key 'created'
+CREATED = ['version', 'changeset', 'timestamp', 'user', 'uid']
 
 
 def shape_element(element):
 	"""Function coverts element to json format"""
 	node = {}
-	if element.tag == "node" or element.tag == "way" :
+	if element.tag == 'node' or element.tag == 'way' :
 		# keep track of type
 		node['type'] = element.tag
 		node['created'] = {}
 		for key in element.attrib.keys():
-			# attributes of "node" and "way" should be turned into
+			# attributes of 'node' and 'way' should be turned into
 			# regular key/value pairs
 			# attributes in the CREATED array should be added under a
-			# key "created"
+			# key 'created'
 			if key in CREATED:
 				node['created'][key] = element.attrib[key]
 					
@@ -77,7 +46,7 @@ def shape_element(element):
 				node[key] = element.attrib[key] 
 
 		# attributes for latitude and longitude should be added to a
-		# "pos" array. Not all entries will have latitude and longitude
+		# 'pos' array. Not all entries will have latitude and longitude
 		try:
 			lat = float(element.attrib['lat'])
 			lon = float(element.attrib['lon'])
@@ -85,7 +54,7 @@ def shape_element(element):
 		except:
 			pass
 		
-		# if second level tag "k" value contains problematic characters,
+		# if second level tag 'k' value contains problematic characters,
 		# it should be ignored
 		for child in element:
 			
@@ -94,10 +63,10 @@ def shape_element(element):
 				value = child.attrib['v']
 				if re.search(problemchars, key):
 					continue
-				# if second level tag "k" value starts with "addr:", it
-				# should be added to a dictionary "address"
+				# if second level tag 'k' value starts with 'addr:', it
+				# should be added to a dictionary 'address'
 				if key.startswith('addr:'):
-					# if there is a second ":" that separates the
+					# if there is a second ':' that separates the
 					# type/direction of a street, the tag should be
 					# ignored
 					if re.search(lower_colon, key[5:]):
@@ -128,8 +97,13 @@ def shape_element(element):
 							node['address'] = {}
 							node['address'][key[5:]] = value
 				
-				# if second level tag "k" value does not start with 
-				# "addr:", but contains ":", you can process it same
+				# fix phone numbers
+				elif key == 'phone':
+					new_value = update_phone(value)
+					node['phone'] = new_value
+
+				# if second level tag 'k' value does not start with 
+				# 'addr:', but contains ':', you can process it same
 				# as any other tag.
 				else:
 					node[key] = value
@@ -149,19 +123,19 @@ def shape_element(element):
 
 def process_map(file_in, pretty=False):
 	"""
-	Function processes OSM using shape_element and writes to json file
+		Function processes OSM using shape_element and writes to json file
 	"""
-	file_out = "{0}.json".format(file_in)
+	file_out = '{0}.json'.format(file_in)
 	data = []
-	with codecs.open(file_out, "w") as fo:
+	with codecs.open(file_out, 'w') as fo:
 		for _, element in ET.iterparse(file_in):
 			node = shape_element(element)
 			if node:
 				data.append(node)
 				if pretty:
-					fo.write(json.dumps(node, indent=2)+"\n")
+					fo.write(json.dumps(node, indent=2)+'\n')
 				else:
-					fo.write(json.dumps(node) + "\n")
+					fo.write(json.dumps(node) + '\n')
 	return None
 
 
